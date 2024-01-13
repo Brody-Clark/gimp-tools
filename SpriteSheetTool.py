@@ -1,38 +1,24 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 from gimpfu import *
 import math
-import numpy as np
-from collections import namedtuple 
+from array import array
 
-def Channel_Data(layer):
-    w,h=layer.width,layer.height
-    region=layer.get_pixel_rgn(0, 0, w,h)
-    pixChars=region[:,:]
-    bpp=region.bpp
-    return np.frombuffer(pixChars,dtype=np.uint8).reshape(w,h,bpp)
-
-def Draw_Result_Layer(image,result_layer,result, region_start_x, region_start_y):
-    rlBytes=np.uint8(result).tobytes()
-    region=result_layer.get_pixel_rgn(region_start_x, region_start_x, (region_start_x + result_layer.width), (region_start_y + result_layer.height),True)
-    region[:,:]=rlBytes
 
 def Combine_Layers_To_Sheet():
 
     MAX_WIDTH   = 1920
     MAX_HEIGHT  = 1080
 
-    # just packs via best fit - tries to make a square
     img = gimp.image_list()[0]
 
     # assumes all layers are meant to be in same width/height as image size
     img_height = img.height
     img_width = img.width
-
     layers = img.layers
-   
     layer_count = len(layers)
 
+    # packs via best fit - tries to make a square
     if layer_count % 2 == 0:
         cols = layer_count / 2 
     else:
@@ -48,13 +34,29 @@ def Combine_Layers_To_Sheet():
     col_count = 0
     combined_layer_offset_x = 0
     combined_layer_offset_y = 0
-
-    
      
-    # draw each original pixel in new layer
+    # draw original pixel region in new layer
     for layer in layers:
-        Draw_Result_Layer(img,combined_layer,Channel_Data(layer),combined_layer_offset_x, combined_layer_offset_y)
-       
+
+        source_width = layer.width
+        source_height = layer.height
+        source_region = layer.get_pixel_rgn(0, 0, source_width, source_height, False, False)
+        bytes_pp = len(source_region[0, 0])
+        target_region = combined_layer.get_pixel_rgn(combined_layer_offset_x ,combined_layer_offset_y, source_width, source_height, True, True)
+
+        source_pixels = array("B", source_region[0:source_width, 0:source_height])
+
+        # draw pixel regions
+        for x in range(0, source_width):
+            for y in range(0, source_height):
+                src_pos = (x + source_width * y) * bytes_pp
+                dest_pos = (x + source_width * y) * bytes_pp
+    
+                
+        target_region[0:source_width, 0:source_height] = source_pixels.tostring()
+                
+
+        # get offsets needed to fit in new layer
         if col_count == cols:
             col_count = 0
             combined_layer_offset_y += img_height
@@ -65,27 +67,30 @@ def Combine_Layers_To_Sheet():
 		
 
     # display completed layer
-    display = pdb.gimp_display_new(img)
-    #gimp.displays_flush()
+    #pdb.gimp_display_new(img)
+    combined_layer.flush()
+    combined_layer.merge_shadow(True)
+    combined_layer.update(0, 0, source_width, source_height)
     gimp.gimp_image_set_resolution(img, final_height, final_width)
     
     return
 
-Combine_Layers_To_Sheet()
+#Combine_Layers_To_Sheet()
 
-register(
-	"Sprite Sheet",
-	"Combine all layers into sprite sheet - assumes all layers are the same size",
-	"Combine all layers into sprite sheet - assumes all layers are the same size",
+gimpfu.register(
+    "Combine To Sprite Sheet",
+	"Combine all layers into a single sprite sheet - assumes all layers are the same size",
+	"Combine all layers into a single sprite sheet - assumes all layers are the same size",
 	"Brody Clark",
 	"Brody Clark",
 	"2022-2023",
-	"<Image>/Combine To Sprite Sheet",
+	"<Image>/Tools",
 	"RGB*, GRAY*",
 	[],
 	[],
-
-	Combine_Layer_To_Sheet, menu = "<Image>, Combine To Sprite Sheet"
+	Combine_Layers_To_Sheet,
+    menu = "<Image>/Tools"
     )
 
-main()
+
+gimpfu.main()
