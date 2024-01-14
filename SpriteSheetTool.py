@@ -2,6 +2,7 @@
 
 from gimpfu import *
 import math
+from ast import literal_eval
 from array import array
 
 
@@ -22,7 +23,7 @@ def Combine_Layers_To_Sheet():
     if layer_count % 2 == 0:
         cols = layer_count / 2 
     else:
-        cols = (layer_count - 1) / 2 
+        cols = (layer_count + 1) / 2 
 
     final_height = cols * img_height
     final_width = cols * img_width
@@ -34,28 +35,35 @@ def Combine_Layers_To_Sheet():
     col_count = 0
     combined_layer_offset_x = 0
     combined_layer_offset_y = 0
-     
+
     # draw original pixel region in new layer
     for layer in layers:
+
+        combined_layer.flush()
+        combined_layer.merge_shadow(True)
+        combined_layer.update(0, 0, final_width, final_height)
 
         source_width = layer.width
         source_height = layer.height
         source_region = layer.get_pixel_rgn(0, 0, source_width, source_height, False, False)
+
         bytes_pp = len(source_region[0, 0])
-        target_region = combined_layer.get_pixel_rgn(combined_layer_offset_x ,combined_layer_offset_y, source_width, source_height, True, True)
-
+        target_region = combined_layer.get_pixel_rgn(0 ,0, source_width, source_height, True, True)
+ 
         source_pixels = array("B", source_region[0:source_width, 0:source_height])
+        target_pixels = array("B", "\x00" * (source_width * source_height * bytes_pp))
 
-        # draw pixel regions
         for x in range(0, source_width):
             for y in range(0, source_height):
                 src_pos = (x + source_width * y) * bytes_pp
                 dest_pos = (x + source_width * y) * bytes_pp
-    
-                
-        target_region[0:source_width, 0:source_height] = source_pixels.tostring()
-                
 
+                target_pixels[dest_pos : dest_pos + bytes_pp] = source_pixels[src_pos: src_pos + bytes_pp]
+
+
+        # draw pixel regions                
+        target_region[0 : source_width, 0 : source_height] = target_pixels.tostring()
+                
         # get offsets needed to fit in new layer
         if col_count == cols:
             col_count = 0
@@ -67,15 +75,14 @@ def Combine_Layers_To_Sheet():
 		
 
     # display completed layer
-    #pdb.gimp_display_new(img)
     combined_layer.flush()
     combined_layer.merge_shadow(True)
-    combined_layer.update(0, 0, source_width, source_height)
+    combined_layer.update(0, 0, final_width, final_height)
     gimp.gimp_image_set_resolution(img, final_height, final_width)
     
-    return
 
-#Combine_Layers_To_Sheet()
+Combine_Layers_To_Sheet()
+
 
 gimpfu.register(
     "Combine To Sprite Sheet",
