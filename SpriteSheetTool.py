@@ -1,39 +1,47 @@
-#!/usr/bin/env python
 
 from gimpfu import *
 import math
-from ast import literal_eval
-from array import array
+import os
 
+FILE_TYPES = ["png", "jpeg"]
+PACK_TYPES = ["By Row", "By Columns", "Best Fit"]
 
-def Combine_Layers_To_Sheet():
+def Export_Layers_As_Sheet(image, dir, file_name, file_type):
+  
+    # check file path is valid
+    if not os.path.isdir(dir):
+            os.makedirs(dir)
 
-    MAX_WIDTH   = 1920
-    MAX_HEIGHT  = 1080
+    # check image is valid
+    if image == None:
+        img = gimp.image_list()[0]
+    else:
+        img = image
 
-    img = gimp.image_list()[0]
+    # check user-given file name
+    if file_name == "":
+        file_name = image.name 
 
-    # assumes all layers are meant to be in same width/height as image size
+    # assumes all layers are meant to be in same width/height as their image size
     img_height = img.height
     img_width = img.width
     layers = img.layers
     layer_count = len(layers)
 
     # packs via best fit - tries to make a square
-    if layer_count % 2 == 0:
-        cols = layer_count / 2 
-    else:
-        cols = (layer_count + 1) / 2 
-    cols -= 1
+    # TODO: let user select By Rows or By Columns with number input, or Best fit
+    cols = math.ceil(math.sqrt(layer_count))
+    cols = int(cols)
 
     final_height = cols * img_height
     final_width = cols * img_width
 
-    # add new layer to draw on
-    combined_layer = gimp.Layer(img,"Sprite Sheet",final_width,final_height,RGBA_IMAGE,100,NORMAL_MODE)
-    img.add_layer(combined_layer,0)
+    # add new image and layer to draw on
+    new_img = pdb.gimp_image_new(final_width, final_height, 0)
+    combined_layer = gimp.Layer(new_img,"Sprite Sheet",final_width,final_height,RGBA_IMAGE,100,NORMAL_MODE)
+    new_img.add_layer(combined_layer,0)
 
-    col_count = 0
+    col_count = 1
     combined_layer_offset_x = 0
     combined_layer_offset_y = 0
 
@@ -59,7 +67,7 @@ def Combine_Layers_To_Sheet():
 
         # get offsets needed to fit in new layer
         if col_count == cols:
-            col_count = 0
+            col_count = 1
             combined_layer_offset_y += img_height
             combined_layer_offset_x = 0
         else:
@@ -67,32 +75,31 @@ def Combine_Layers_To_Sheet():
             combined_layer_offset_x += img_width
 		
 
-    # display completed layer
-    combined_layer.flush()
-    combined_layer.update(0, 0, final_width, final_height)
-    img.resize(final_width, final_height, 0,0)
-    new_image = pdb.gimp_image_duplicate(img)   
-    combined_layer = pdb.gimp_image_merge_visible_layers(new_image, CLIP_TO_IMAGE)
-    pdb.gimp_file_save(new_image, combined_layer, 'F:/Development/Gimp/temp/test.png', '?')
-    pdb.gimp_image_delete(new_image)
-
-Combine_Layers_To_Sheet()
+    # export and cleanup
+    combined_layer = pdb.gimp_image_merge_visible_layers(new_img, CLIP_TO_IMAGE)
+    file_name = '%s.%s'%(file_name,FILE_TYPES[file_type])
+    pdb.gimp_file_save(new_img, combined_layer, os.path.join(dir, file_name), file_name)
+    pdb.gimp_image_delete(new_img)
 
 
-# gimpfu.register(
-#     "Combine To Sprite Sheet",
-# 	"Combine all layers into a single sprite sheet - assumes all layers are the same size",
-# 	"Combine all layers into a single sprite sheet - assumes all layers are the same size",
-# 	"Brody Clark",
-# 	"Brody Clark",
-# 	"2022-2023",
-# 	"<Image>/Tools",
-# 	"RGB*, GRAY*",
-# 	[],
-# 	[],
-# 	Combine_Layers_To_Sheet,
-#     menu = "<Image>/Tools"
-#     )
+register(
+    "export-as-sprite-sheet",
+    "Combine layers into sprite sheet and export",
+    "Combine layers into sprite sheet and export - combines layers into a square best-fit sheet. Assumes all layers are same size",
+    "Brody Clark",
+    "Brody Clark",
+    "2024",
+    "Export As Sprite Sheet...",
+    "*",
+    [
+        (PF_IMAGE, "image", "Input Image", None),
+        (PF_DIRNAME, "dir", "Export Location", ""),
+        (PF_STRING, "file_name", "Exported File Name", ""),
+        (PF_OPTION, "file_type", "Exported File Type", 0, FILE_TYPES),
+    ],
+    [],
+    Export_Layers_As_Sheet,
+    menu="<Image>/Image/Export As Sprite Sheet"
+    )
 
-
-# gimpfu.main()
+main()
