@@ -4,6 +4,7 @@ Collection of pixel artwork-focused plugins for GIMP
 ## Adding to GIMP
 1.  locate GIMP plug-in directory
     * Can be found within GIMP under 'Edit/Preferences/Folders/Plug-ins'
+2.  Place .py files in plug-ins directory
 2.  Restart GIMP
 
 ## Plugins
