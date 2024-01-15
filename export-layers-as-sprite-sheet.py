@@ -12,24 +12,19 @@ def Export_Layers_As_Sheet(image, dir, file_name, file_type):
     if not os.path.isdir(dir):
             os.makedirs(dir)
 
-    # check image is valid
-    if image == None:
-        img = gimp.image_list()[0]
-    else:
-        img = image
-
     # check user-given file name
     if file_name == "":
         file_name = image.name 
 
-    # assumes all layers are meant to be in same width/height as their image size
-    img_height = img.height
-    img_width = img.width
-    layers = img.layers
-    layer_count = len(layers)
-
+ 
     # packs via best fit - tries to make a square
     # TODO: let user select By Rows or By Columns with number input, or Best fit
+    layers = image.layers
+    layer_count = len(layers)
+
+    img_height = image.height
+    img_width = image.width
+
     cols = math.ceil(math.sqrt(layer_count))
     cols = int(cols)
 
@@ -45,7 +40,7 @@ def Export_Layers_As_Sheet(image, dir, file_name, file_type):
     combined_layer_offset_x = 0
     combined_layer_offset_y = 0
 
-    # draw original pixel region in new layer
+    # draw original pixels in new layer
     for layer in layers:
         combined_layer.update(0, 0, final_width, final_height)
     
