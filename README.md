@@ -1,10 +1,10 @@
 # gimp-tools
 Collection of pixel artwork-focused plugins for GIMP
 
-## To add to GIMP
-* locate GIMP plug-in directory
+## Adding to GIMP
+1.  locate GIMP plug-in directory
     * Can be found within GIMP under 'Edit/Preferences/Folders/Plug-ins'
-* Restart GIMP
+2.  Restart GIMP
 
 ## Plugins
 ### export-layers-as-sprite-sheet

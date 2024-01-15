@@ -4,7 +4,7 @@ import math
 import os
 
 FILE_TYPES = ["png", "jpeg"]
-PACK_TYPES = ["By Row", "By Columns", "Best Fit"]
+PACK_TYPES = ["Best Fit","Rows", "Columns"]
 
 def Export_Layers_As_Sheet(image, dir, file_name, file_type):
   
@@ -15,10 +15,10 @@ def Export_Layers_As_Sheet(image, dir, file_name, file_type):
     # check user-given file name
     if file_name == "":
         file_name = image.name 
-
+    else:
+        file_name = file_name.strip()
  
     # packs via best fit - tries to make a square
-    # TODO: let user select By Rows or By Columns with number input, or Best fit
     layers = image.layers
     layer_count = len(layers)
 
@@ -91,6 +91,7 @@ register(
         (PF_DIRNAME, "dir", "Export Location", ""),
         (PF_STRING, "file_name", "Exported File Name", ""),
         (PF_OPTION, "file_type", "Exported File Type", 0, FILE_TYPES),
+        #(PF_OPTION, "pack_type", "Pack Method", 0, PACK_TYPES),
     ],
     [],
     Export_Layers_As_Sheet,
