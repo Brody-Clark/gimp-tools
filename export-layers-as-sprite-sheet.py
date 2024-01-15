@@ -4,7 +4,6 @@ import math
 import os
 
 FILE_TYPES = ["png", "jpeg"]
-PACK_TYPES = ["Best Fit","Rows", "Columns"]
 
 def Export_Layers_As_Sheet(image, dir, file_name, file_type):
   
@@ -42,8 +41,7 @@ def Export_Layers_As_Sheet(image, dir, file_name, file_type):
 
     # draw original pixels in new layer
     for layer in layers:
-        combined_layer.update(0, 0, final_width, final_height)
-    
+
         source_width = layer.width
         source_height = layer.height
        
@@ -53,6 +51,7 @@ def Export_Layers_As_Sheet(image, dir, file_name, file_type):
                 pixel_color = cur_pixel[1]
                 pixel_size = cur_pixel[0]
                 
+                # force RGB pixles to be RGBA
                 if pixel_size == 3:
                     pixel_size = 4
                     new_pixel_color =[pixel_color[0], pixel_color[1], pixel_color[2], 255]
@@ -73,14 +72,15 @@ def Export_Layers_As_Sheet(image, dir, file_name, file_type):
     # export and cleanup
     combined_layer = pdb.gimp_image_merge_visible_layers(new_img, CLIP_TO_IMAGE)
     file_name = '%s.%s'%(file_name,FILE_TYPES[file_type])
-    pdb.gimp_file_save(new_img, combined_layer, os.path.join(dir, file_name), file_name)
+    export_path = os.path.join(dir, file_name)
+    pdb.gimp_file_save(new_img, combined_layer, export_path, file_name)
     pdb.gimp_image_delete(new_img)
 
 
 register(
     "export-as-sprite-sheet",
     "Combine layers into sprite sheet and export",
-    "Combine layers into sprite sheet and export - combines layers into a square best-fit sheet. Assumes all layers are same size",
+    "Combine layers into sprite sheet and export - combines layers into a square best-fit sheet. Assumes all layers are same size and image is RGBA",
     "Brody Clark",
     "Brody Clark",
     "2024",
@@ -91,7 +91,6 @@ register(
         (PF_DIRNAME, "dir", "Export Location", ""),
         (PF_STRING, "file_name", "Exported File Name", ""),
         (PF_OPTION, "file_type", "Exported File Type", 0, FILE_TYPES),
-        #(PF_OPTION, "pack_type", "Pack Method", 0, PACK_TYPES),
     ],
     [],
     Export_Layers_As_Sheet,
