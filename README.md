@@ -5,7 +5,7 @@ Collection of pixel art-focused plugins for GIMP Image Editing Software.
 ## Adding Plugins to GIMP
 
 1. Locate your GIMP plug-in directory, this can be found within GIMP under `Edit > Preferences > Folders > Plug-ins`
-2. Copy all files and folders from the `Plugins` directory to the GIMP plug-ins directory.
+2. Copy all files and folders from this project's `Plugins` directory to the GIMP `plug-ins` directory.
 3. Restart GIMP.
 
 ## Included Plugins
@@ -31,6 +31,6 @@ Collection of pixel art-focused plugins for GIMP Image Editing Software.
 - Located under `Image > PixelToolkit > xBRZ Scale`
 - Creates a non-destructive xBRZ-scaled image of all visible layers
 
-<img src="resources/xBRZ_Scaler_Before.png" alt="xBRZ Before" width="25%">
+<img src="resources/xBRZ_Scaler_Before.png" alt="xBRZ Before" width="25%">32x32
   
-<img src="resources/xBRZ_Scaler_After.png" alt="xBRZ After" width="35%">
+<img src="resources/xBRZ_Scaler_After.png" alt="xBRZ After" width="35%">128x128

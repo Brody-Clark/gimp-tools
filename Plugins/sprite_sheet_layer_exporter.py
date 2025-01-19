@@ -3,9 +3,6 @@ import os
 from gimpfu import *
 
 FILE_TYPES = ["png", "jpeg"]
-RGB = 3
-RGBA = 4
-OPAQUE_ALPHA = 255
 
 def export_layers_as_spritesheet(image, drawable, export_dir, file_name, file_type):
 
@@ -22,13 +19,10 @@ def export_layers_as_spritesheet(image, drawable, export_dir, file_name, file_ty
     # Packs via best fit - tries to make a square
     layers = image.layers
     layer_count = len(layers)
-
     img_height = image.height
     img_width = image.width
-
     cols = math.ceil(math.sqrt(layer_count))
     cols = int(cols)
-
     final_height = cols * img_height
     final_width = cols * img_width
 
@@ -51,28 +45,14 @@ def export_layers_as_spritesheet(image, drawable, export_dir, file_name, file_ty
     for layer in layers:
         source_width = layer.width
         source_height = layer.height
-        for x in range(0, source_width):
-            for y in range(0, source_height):
-                cur_pixel = pdb.gimp_drawable_get_pixel(layer,x,y)
-                pixel_color = cur_pixel[1]
-                pixel_size = cur_pixel[0]
-                
-                # Force RGB pixles to be RGBA
-                if pixel_size == RGB:
-                    pixel_size = RGBA
-                    new_pixel_color =[pixel_color[0],
-                                      pixel_color[1],
-                                      pixel_color[2],
-                                      OPAQUE_ALPHA]
-                    pixel_color = new_pixel_color
+        pixels = get_pixel_region(layer, 0, source_width, 0, source_height)
+        draw_pixel_region(pixels, combined_layer,
+                          combined_layer_offset_x,
+                          combined_layer_offset_x + source_width,
+                          combined_layer_offset_y,
+                          combined_layer_offset_y + source_height )
 
-                pdb.gimp_drawable_set_pixel(combined_layer,
-                                            combined_layer_offset_x + x,
-                                            combined_layer_offset_y + y,
-                                            pixel_size,
-                                            pixel_color)
-
-        # Get offsets needed to fit in new layer
+        # Get offsets needed to fit next iteration in new layer
         if col_count == cols:
             col_count = 1
             combined_layer_offset_y += img_height
@@ -82,12 +62,23 @@ def export_layers_as_spritesheet(image, drawable, export_dir, file_name, file_ty
             combined_layer_offset_x += img_width
 		
     # Export and cleanup
+    combined_layer.flush()
+    combined_layer.merge_shadow(True)
     combined_layer = pdb.gimp_image_merge_visible_layers(new_img, CLIP_TO_IMAGE)
     file_name = "{}.{}".format(file_name, FILE_TYPES[file_type])
     export_path = os.path.join(export_dir, file_name)
     pdb.gimp_file_save(new_img, combined_layer, export_path, file_name)
     pdb.gimp_image_delete(new_img)
+    
+def get_pixel_region(layer, x_begin, x_end, y_begin, y_end):
+    region = layer.get_pixel_rgn(x_begin, y_begin, x_end, y_end, False, False)
+    pixels = bytearray(region[:,:])
+    return pixels
 
+def draw_pixel_region(pixels, layer, x_begin, x_end, y_begin, y_end):
+    region_out = layer.get_pixel_rgn(x_begin, y_begin, x_end, y_end, True, True)
+    region_out[:,:] = bytes(pixels)
+    
 register(
     "export-as-sprite-sheet",
     "Combine layers into sprite sheet and export",
@@ -99,7 +90,6 @@ register(
     "<Image>/Image/PixelToolkit/Export As Sprite Sheet",
     "*",
     [
-        # (PF_IMAGE, "image", "Input Image", None),
         (PF_DIRNAME, "export_dir", "Export Location", ""),
         (PF_STRING, "file_name", "Exported File Name", ""),
         (PF_OPTION, "file_type", "Exported File Type", 0, FILE_TYPES),

@@ -18,7 +18,7 @@ else:
 dll_path = os.path.dirname(script_path)
 xbrz_lib = ctypes.CDLL(dll_path + "\\xBRZ\\xBRZWrapper.dll")
 
-# Define the function prototype
+# Define the xBRZ function prototype
 xbrz_lib.Scale.argtypes = [
     ctypes.c_size_t,  # factor
     ctypes.POINTER(ctypes.c_uint32),  # src
@@ -81,7 +81,7 @@ def scale_to_new_layer(image, drawable, scale_factor):
     
 register(
     "xbrz_pixel_scaler",
-    "Scale Images with xBRZ algorithm",
+    "Scale Images using xBRZ",
     "Creates a non-destructive xBRZ-scaled image of all visible layers.",
     "Brody Clark",
     "MIT License",
